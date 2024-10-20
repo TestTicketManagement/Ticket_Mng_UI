@@ -17,8 +17,8 @@
                 <td>{{ ticket.status }}</td>
 				<td>{{ ticket.creationDate }}</td>
                 <td>
-                    <a href="#" (click)="openUpdateTicketModal(ticket)"  class="link-primary m-2">Update</a>
-                    <a href="#"  class="link-danger">Delete</a>
+                    <a  (click)="openUpdateTicketModal(ticket)"  class="link-primary m-2">Update</a>
+                    <a  (click)="confirmDeleteTicket(ticket.id)"  class="link-danger">Delete</a>
                 </td>
 			</tr>
 	</tbody>
@@ -51,25 +51,33 @@
       <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss('Cross click')"></button>
     </div>
     <div class="modal-body">
-      <form *ngIf="selectedTicket" >
+      <form [formGroup]="TicketForm" *ngIf="selectedTicket" >
         <div class="mb-3">
           <label for="id" class="form-label">Ticket ID</label>
-          <input type="number" id="id" class="form-control" [(ngModel)]="selectedTicket.id"  name="id" [readonly]="isUpdate">
+          <input type="number" id="id" class="form-control"  formControlName="ticketId"  name="id" [readonly]="isUpdate">
+          <div *ngIf="TicketId?.invalid && (TicketId?.dirty || TicketId?.touched)" class="text-danger">
+            <div *ngIf="TicketId?.errors?.['required']">This field is required.</div>
+            <div *ngIf="TicketId?.errors?.['pattern']">Please enter a valid number.</div>
+          </div>
         </div>
         <div class="mb-3">
           <label for="description" class="form-label">Designation</label>
-          <input type="text" id="description" class="form-control" [(ngModel)]="selectedTicket.description" name="description" required>
+          <input type="text" id="description" class="form-control"  formControlName="description" name="description" required>
+          <div *ngIf="Description?.invalid && (Description?.dirty || Description?.touched)" class="text-danger">
+            <div *ngIf="Description?.errors?.['required']">This field is required.</div>
+            <div *ngIf="Description?.errors?.['minlength']">Please enter long description.</div>
+          </div>
         </div>
         <div class="mb-3">
           <label for="status" class="form-label">Status</label>
-          <select id="status" class="form-select" [(ngModel)]="selectedTicket.status"  name="status" required>
+          <select id="status" class="form-select" formControlName="status"   name="status" required>
             <option [ngValue]=0>Open</option>
             <option [ngValue]=1>Closed</option>
           </select>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" >Cancel</button>
-          <button type="button" class="btn btn-primary"  (click)="isUpdate ? addTicket() : addTicket()"  *ngIf="selectedTicket || !isUpdate" >
+          <button type="button" class="btn btn-secondary" (click)="modal.dismiss('Cross click')"  >Cancel</button>
+          <button type="button" class="btn btn-primary"  [disabled]="TicketForm.invalid" (click)="isUpdate ? updateTicket() : addTicket()"  *ngIf="selectedTicket || !isUpdate" >
             {{ isUpdate ? 'Update' : 'Add' }} 
           </button>
         </div>

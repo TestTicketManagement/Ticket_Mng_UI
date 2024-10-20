@@ -1,7 +1,8 @@
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { TicketService } from '../Services/ticket.service';
 import { GeneralResponse, SaveTicket, Ticket } from '../models/models';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-tickets',
@@ -10,31 +11,47 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 })
 export class TicketsComponent implements OnInit {
 
-  constructor(private ticketService : TicketService , private modalService : NgbModal) { }
+  constructor(private ticketService : TicketService ,
+              private modalService : NgbModal ,
+              private fb : FormBuilder
+            ) { }
 
   tickets : Ticket[] = [];
+  TicketForm! : FormGroup;
 
-  page: number = 1; 
-  pageSize: number = 4; 
-  collectionSize: number = 0; 
-  pagedTickets: Ticket[] = []; 
   isUpdate: boolean = false;
   selectedTicket: SaveTicket | null = null;
+  modalRef!: NgbModalRef;
 
   @ViewChild('ticketModal') ticketModal!: TemplateRef<any>;
 
   ngOnInit(): void {
-    this.loadTickets();
-	 //  collectionSize = tickets.length;
-	  // tickets0 = this.tickets[];
 
-   //  refreshCountries() {
-   //   this.tickets = Ticket.map((ticket, i) => ({ id: i + 1, ...ticket })).slice(
-    //    (this.page - 1) * this.pageSize,
-    //    (this.page - 1) * this.pageSize + this.pageSize,
-    //  );
-   // }
+    this.loadTickets();
+    this.validateForm();
+
+
   }
+
+validateForm()
+{
+  this.TicketForm = this.fb.group({
+    ticketId : ['', [Validators.required , Validators.pattern('^[0-9]*$')]],
+    description : ['',[Validators.required, Validators.minLength(5),]],
+    status: [0, Validators.required]
+  });
+}
+
+
+get TicketId(): FormControl{
+  return this.TicketForm.get('ticketId') as FormControl;
+}
+
+get Description(): FormControl{
+  return this.TicketForm.get('description') as FormControl;
+}
+
+
 
   loadTickets(): void {
     this.ticketService.getTickets().subscribe(
@@ -51,7 +68,13 @@ export class TicketsComponent implements OnInit {
   openAddTicketModal(): void {
     this.isUpdate = false;
     this.selectedTicket = { id: 0, description: '', status: 0 };
-    this.modalService.open(this.ticketModal);
+
+    this.TicketForm.reset({
+      ticketId: '',
+      description: '',
+      status: 0 
+    });
+    this.modalRef = this.modalService.open(this.ticketModal);
   }
 
   openUpdateTicketModal(ticket: Ticket): void {
@@ -64,19 +87,32 @@ export class TicketsComponent implements OnInit {
       status: statusNumber,
     };
 
+    this.TicketForm.setValue({
+      ticketId: this.selectedTicket.id,
+      description: this.selectedTicket.description,
+      status: this.selectedTicket.status
+    });
+
     console.log(this.selectedTicket);
   
-    this.modalService.open(this.ticketModal);
+    this.modalRef = this.modalService.open(this.ticketModal);
   }
 
 
   addTicket(): void {
-    if (this.selectedTicket) {
-        this.ticketService.addTicket(this.selectedTicket).subscribe(
+
+     this.selectedTicket  = {
+      id: this.TicketForm.value.ticketId,
+      description: this.TicketForm.value.description,
+      status: this.TicketForm.value.status
+    };
+
+       this.ticketService.addTicket(this.selectedTicket).subscribe(
             (response: GeneralResponse) => {
                 if (response.flag) {
                   alert(response.message);
                     this.loadTickets(); 
+                    this.modalRef.dismiss();
                 } else {
                     alert(response.message);
                 }
@@ -86,9 +122,66 @@ export class TicketsComponent implements OnInit {
             }
         );
     }
+
+
+
+updateTicket(): void {
+
+  this.selectedTicket = {
+    id: this.TicketForm.value.ticketId,
+    description: this.TicketForm.value.description,
+    status: this.TicketForm.value.status
+  };
+
+  if (this.selectedTicket) {
+    this.ticketService.updateTicket(this.selectedTicket).subscribe(
+      (response: GeneralResponse) => {
+        if (response.flag) {
+          alert(response.message);
+          this.loadTickets();
+          this.modalRef.dismiss(); 
+        } else {
+          alert(response.message);
+        }
+      },
+      (error) => {
+        console.error('Error updating ticket', error);
+      }
+    );
+  }
+}
+
+confirmDeleteTicket(ticketId: number): void {
+  const confirmed = window.confirm('Are you sure you want to delete this ticket?');
+  
+  if (confirmed) {
+    this.deleteTicket(ticketId);
+  }
+}
+
+deleteTicket(ticketId: number): void {
+  this.ticketService.deleteTicket(ticketId).subscribe(
+    (response: GeneralResponse) => {
+      if (response.flag) {
+        alert(response.message);
+        this.loadTickets(); 
+      } else {
+        alert('Error deleting ticket');
+      }
+    },
+    (error) => {
+      console.error('Error deleting ticket', error);
+    }
+  );
+}
+
+
 }
 
 
 
 
-}
+
+
+
+

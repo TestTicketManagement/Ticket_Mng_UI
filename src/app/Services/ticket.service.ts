@@ -22,4 +22,13 @@ export class TicketService {
   addTicket(ticket: SaveTicket): Observable<GeneralResponse> {
     return this.http.post<GeneralResponse>(`${this.baseUrl}Ticket/add-ticket`, ticket);
 }
+
+updateTicket(ticket: SaveTicket): Observable<GeneralResponse> {
+  return this.http.put<GeneralResponse>(`${this.baseUrl}Ticket/update-ticket`, ticket);
+}
+
+
+deleteTicket(ticketId: number): Observable<GeneralResponse> {
+  return this.http.delete<GeneralResponse>(`${this.baseUrl}Ticket/delete-ticket/${ticketId}`);
+}
 }
