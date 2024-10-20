@@ -1,4 +1,18 @@
-<div class="d-flex justify-content-center mt-5">
+
+<div class="d-flex justify-content-center align-items-center mt-3 ">
+    <div class="w-50">
+      <input 
+      type="text" 
+      class="form-control" 
+      placeholder="Filter tickets" 
+      [(ngModel)]="searchTerm" 
+      (input)="filterTickets()" 
+    >
+    </div>
+  </div>
+
+<div class="d-flex justify-content-center mt-3">
+
 <table class="table table-striped w-75">
 	<thead>
 		<tr>
@@ -11,7 +25,7 @@
 	</thead>
 	<tbody>
 		 
-			<tr *ngFor="let ticket of tickets" >
+			<tr *ngFor="let ticket of filteredTickets | paginate: { itemsPerPage: 5, currentPage: page } " >
 				<td>{{ ticket.id }} </td>
 				<td>{{ ticket.description }}</td>
                 <td>{{ ticket.status }}</td>
@@ -22,27 +36,15 @@
                 </td>
 			</tr>
 	</tbody>
-    <div class="d-flex justify-content-start mt-2 ">
+    <div class="d-flex justify-content-between align-items-center w-75 mt-2 ">
         <button (click)="openAddTicketModal()"  class="btn btn-success">Add Ticket</button> 
-    </div>
-</table>
-<!--
-<div class="d-flex justify-content-between p-2">
-	<ngb-pagination
-		[collectionSize]="collectionSize"
-		[(page)]="page"
-		[pageSize]="pageSize"
-		(pageChange)="refreshCountries()"
-	>
-	</ngb-pagination>
 
-	<select class="form-select" style="width: auto" [(ngModel)]="pageSize" (ngModelChange)="refreshCountries()">
-		<option [ngValue]="2">2 items per page</option>
-		<option [ngValue]="4">4 items per page</option>
-		<option [ngValue]="6">6 items per page</option>
-	</select>
-</div>
--->
+        <pagination-controls (pageChange)="page = $event"></pagination-controls>
+    </div>
+        
+    
+</table>
+
 </div>
 
 <ng-template #ticketModal let-modal>

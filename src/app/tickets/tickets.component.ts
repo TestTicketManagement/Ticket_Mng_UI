@@ -3,6 +3,7 @@ import { TicketService } from '../Services/ticket.service';
 import { GeneralResponse, SaveTicket, Ticket } from '../models/models';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import Fuse from 'fuse.js';
 
 @Component({
   selector: 'app-tickets',
@@ -18,10 +19,13 @@ export class TicketsComponent implements OnInit {
 
   tickets : Ticket[] = [];
   TicketForm! : FormGroup;
-
+  filteredTickets: Ticket[] = [];
+  searchTerm: string = '';
+  page: number = 1;
   isUpdate: boolean = false;
   selectedTicket: SaveTicket | null = null;
   modalRef!: NgbModalRef;
+  fuse!: Fuse<Ticket>;
 
   @ViewChild('ticketModal') ticketModal!: TemplateRef<any>;
 
@@ -43,6 +47,22 @@ validateForm()
 }
 
 
+filterTickets(): void {
+  if (this.searchTerm.trim() === '') {
+    this.filteredTickets = this.tickets;
+  } else {
+    const options = {
+      keys: ['description', 'status', 'id'],
+      threshold: 0.3  
+    };
+    
+    this.fuse = new Fuse(this.tickets, options);
+    const results = this.fuse.search(this.searchTerm);
+    this.filteredTickets = results.map(result => result.item);
+  }
+}
+
+
 get TicketId(): FormControl{
   return this.TicketForm.get('ticketId') as FormControl;
 }
@@ -57,6 +77,7 @@ get Description(): FormControl{
     this.ticketService.getTickets().subscribe(
       (data) => {
         this.tickets = data;
+        this.filteredTickets = this.tickets;
         console.log(this.tickets);
       },
       (error) => {
